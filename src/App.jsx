@@ -4,6 +4,99 @@ import ExcelJS from 'exceljs'
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
 const SIZE_MATCH_ORDER = ['4XL','3XL','XXL','XL','L','M','S'] // longest-first
 
+const I18N = {
+  th: {
+    appTitle: '{t.appTitle}',
+    appSub: '{t.appSub}',
+    runsLocal: '{t.runsLocal}',
+    step1: '{t.step1}',
+    dropPrimary: '{t.dropPrimary}',
+    dropSecondary: '{t.dropSecondary}',
+    pickFile: '{t.pickFile}',
+    clear: '{t.clear}',
+    updatedDate: '{t.updatedDate}',
+    filterModel: '{t.filterModel}',
+    all: '{t.all}',
+    search: '{t.search}',
+    searchPlaceholder: '{t.searchPlaceholder}',
+    generate: '{t.generate}',
+    processing: '{t.processing}',
+    note: '{t.note}',
+    model: '{t.model}',
+    color: '{t.color}',
+    emptyStateNoData: '{t.emptyStateNoData}',
+    emptyStateLoading: '{t.emptyStateLoading}',
+    emptyStateNoMatch: '{t.emptyStateNoMatch}',
+    step2: '{t.step2}',
+    uploadedFiles: '{t.uploadedFiles}',
+    readableRows: '{t.readableRows}',
+    rowCount: 'จำนวนแถว ({t.model}+{t.color})',
+    badSku: '{t.badSku}',
+    dlError: '{t.dlError}',
+    sizes: '{t.sizes}',
+    missing: '{t.missing}',
+    aggregation: '{t.aggregation}',
+    missingZero: '{t.missingZero}',
+    aggSum: '{t.aggSum}',
+    foot: '{t.foot}',
+    lang: 'ภาษา',
+    langTH: 'ไทย',
+    langZH: '中文',
+    checksTitle: 'ความถูกต้องของตัวเลข',
+    checkRaw: 'ผลรวมสต็อก (จากไฟล์หลัง parse)',
+    checkMatrix: 'ผลรวมสต็อก (หลังจัดตาราง)',
+    checkDiff: 'ส่วนต่าง',
+    checkOk: 'ตรงกัน',
+    checkWarn: 'ไม่ตรงกัน (โปรดตรวจสอบ)',
+    perFile: 'แยกตามไฟล์',
+  },
+  zh: {
+    appTitle: 'ERP → 库存盘点表（一次合并 T009/T111）',
+    appSub: '支持同时上传多个 ERP 文件 → 自动把 SKU 拆分为 型号/颜色/尺码，并生成与模板一致的盘点表（缺失填 0）',
+    runsLocal: '本地运行 • React + Vite • ExcelJS',
+    step1: '1) 上传 ERP 文件',
+    dropPrimary: '把 .xlsx 文件拖到这里，或点击选择文件',
+    dropSecondary: '支持多文件（如 T009.xlsx + T111.xlsx）。即使不同型号颜色同名也不会混淆，因为键是（型号, 颜色, 尺码）',
+    pickFile: '选择文件',
+    clear: '清空',
+    updatedDate: '更新日期',
+    filterModel: '筛选型号',
+    all: '全部',
+    search: '搜索',
+    searchPlaceholder: '例如 T009 或 darkgreen',
+    generate: '生成 Excel',
+    processing: '处理中…',
+    note: '说明：程序会先按表头名称识别列；若识别失败，会回退到 B 列（SKU）与 I 列（可售库存）',
+    model: '型号',
+    color: '颜色',
+    emptyStateNoData: '暂无数据 — 请先上传 ERP 文件',
+    emptyStateLoading: '正在读取文件…',
+    emptyStateNoMatch: '没有匹配到数据',
+    step2: '2) 导出前检查',
+    uploadedFiles: '已上传文件',
+    readableRows: '读取到的 SKU 行数',
+    rowCount: '行数（型号+颜色）',
+    badSku: '无法解析的 SKU',
+    dlError: '下载错误报告（CSV）',
+    sizes: '尺码',
+    missing: '缺失填充',
+    aggregation: '汇总方式',
+    missingZero: '填 0',
+    aggSum: '求和（避免多文件重复丢失）',
+    foot: '如有 SKU 格式异常（例如缺少 - 或末尾没有尺码），请下载 CSV 错误报告核对后再导出',
+    lang: '语言',
+    langTH: 'ไทย',
+    langZH: '中文',
+    checksTitle: '数字准确性校验',
+    checkRaw: '库存合计（解析后）',
+    checkMatrix: '库存合计（生成表后）',
+    checkDiff: '差值',
+    checkOk: '一致',
+    checkWarn: '不一致（请核对）',
+    perFile: '按文件查看',
+  }
+}
+
 function formatBytes(bytes){
   if (!Number.isFinite(bytes)) return ''
   const units = ['B','KB','MB','GB']
@@ -192,8 +285,8 @@ async function generateExcel({ matrix, updatedISO }){
   })
 
   // Column widths (approx like your form)
-  ws.getColumn(1).width = 10 // รุ่น
-  ws.getColumn(2).width = 16 // สี
+  ws.getColumn(1).width = 10 // {t.model}
+  ws.getColumn(2).width = 16 // {t.color}
   const sizeColsStart = 3
   for (let i=0; i<SIZES.length; i++){
     ws.getColumn(sizeColsStart+i).width = 9
@@ -208,7 +301,7 @@ async function generateExcel({ matrix, updatedISO }){
 
   // Update date box on the right (H1:I2)
   ws.mergeCells('H1','I1')
-  ws.getCell('H1').value = 'อัปเดตวันที่'
+  ws.getCell('H1').value = '{t.updatedDate}'
   ws.getCell('H1').font = { bold: true, size: 14 }
   ws.getCell('H1').alignment = { vertical:'middle', horizontal:'center' }
 
@@ -224,8 +317,8 @@ async function generateExcel({ matrix, updatedISO }){
 
   // Header row (Row 3)
   const headerRowNum = 3
-  ws.getCell(`A${headerRowNum}`).value = 'รุ่น'
-  ws.getCell(`B${headerRowNum}`).value = 'สี'
+  ws.getCell(`A${headerRowNum}`).value = '{t.model}'
+  ws.getCell(`B${headerRowNum}`).value = '{t.color}'
   for (let i=0; i<SIZES.length; i++){
     ws.getCell(headerRowNum, sizeColsStart+i).value = SIZES[i]
   }
@@ -325,6 +418,9 @@ function downloadBlob(blob, filename){
 
 export default function App(){
   const inputRef = useRef(null)
+  const [lang, setLang] = useState('th')
+  const t = I18N[lang]
+
   const [files, setFiles] = useState([])
   const [updatedISO, setUpdatedISO] = useState(todayISO())
   const [loading, setLoading] = useState(false)
@@ -355,6 +451,31 @@ export default function App(){
     const uniqueRows = new Set(rows.map(r => `${r.model}||${r.color}`)).size
     return { totalSkuRows, badSku, uniquePairs, uniqueRows }
   }, [rows, errors])
+
+const checks = useMemo(() => {
+  const rawTotal = rows.reduce((acc, r) => acc + (Number(r.stock) || 0), 0)
+
+  const matrixTotal = matrix.reduce((acc, item) => {
+    let s = 0
+    for (const size of SIZES) s += (Number(item[size]) || 0)
+    return acc + s
+  }, 0)
+
+  const perFile = new Map()
+  for (const r of rows){
+    const key = r.file || 'unknown'
+    perFile.set(key, (perFile.get(key) || 0) + (Number(r.stock) || 0))
+  }
+
+  const diff = rawTotal - matrixTotal
+  return {
+    rawTotal,
+    matrixTotal,
+    diff,
+    ok: diff === 0,
+    perFile: Array.from(perFile.entries()).sort((a,b)=>a[0].localeCompare(b[0])),
+  }
+}, [rows, matrix])
 
   async function handleFilesSelected(fileList){
     const arr = Array.from(fileList || []).filter(f => f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls'))
@@ -415,26 +536,35 @@ export default function App(){
     <div className="container">
       <div className="header">
         <div>
-          <div className="hTitle">ERP → ใบเช็คสต็อก (T009/T111 รวมรอบเดียว)</div>
+          <div className="hTitle">{t.appTitle}</div>
           <div className="hSub">
-            อัปโหลดไฟล์ ERP ได้หลายไฟล์พร้อมกัน → โปรแกรมจะแยก SKU เป็น รุ่น/สี/ไซส์ และทำตารางเช็คสต็อกแบบในฟอร์มให้ทันที (ช่องที่ไม่มีให้เป็น 0)
+            {t.appSub}
           </div>
         </div>
-        <div className="badge">Runs locally • React + Vite • ExcelJS</div>
+        <div style={{display:'flex', flexDirection:'column', gap:10, alignItems:'flex-end'}}>
+  <div className="badge">{t.runsLocal}</div>
+  <div className="input" style={{padding:'8px 10px'}}>
+    <label>{t.lang}</label>
+    <select value={lang} onChange={(e)=>setLang(e.target.value)}>
+      <option value="th">{t.langTH}</option>
+      <option value="zh">{t.langZH}</option>
+    </select>
+  </div>
+</div>
       </div>
 
       <div className="grid">
         <div className="card">
-          <div className="cardTitle">1) อัปโหลดไฟล์ ERP</div>
+          <div className="cardTitle">{t.step1}</div>
 
           <div className="drop" onDrop={onDrop} onDragOver={onDragOver}>
             <div className="dropLeft">
-              <div className="dropPrimary">ลากไฟล์ .xlsx มาวางที่นี่ หรือกดเลือกไฟล์</div>
-              <div className="dropSecondary">รองรับหลายไฟล์พร้อมกัน (เช่น T009.xlsx + T111.xlsx) และจะไม่สับสนแม้สีซ้ำ เพราะคีย์เป็น (รุ่น, สี, ไซส์)</div>
+              <div className="dropPrimary">{t.dropPrimary}</div>
+              <div className="dropSecondary">{t.dropSecondary}</div>
             </div>
             <div style={{display:'flex', gap:8}}>
-              <button className="btn secondary" onClick={() => { inputRef.current?.click() }} disabled={loading}>เลือกไฟล์</button>
-              <button className="btn" onClick={() => handleFilesSelected([])} disabled={loading || (files.length===0 && rows.length===0 && errors.length===0)}>ล้าง</button>
+              <button className="btn secondary" onClick={() => { inputRef.current?.click() }} disabled={loading}>{t.pickFile}</button>
+              <button className="btn" onClick={() => handleFilesSelected([])} disabled={loading || (files.length===0 && rows.length===0 && errors.length===0)}>{t.clear}</button>
             </div>
           </div>
 
@@ -460,38 +590,38 @@ export default function App(){
 
           <div className="row">
             <div className="input">
-              <label>อัปเดตวันที่</label>
+              <label>{t.updatedDate}</label>
               <input type="date" value={updatedISO} onChange={(e)=>setUpdatedISO(e.target.value)} />
             </div>
 
             <div className="input">
-              <label>Filter รุ่น</label>
+              <label>{t.filterModel}</label>
               <select value={modelFilter} onChange={(e)=>setModelFilter(e.target.value)}>
-                <option value="ALL">ทั้งหมด</option>
+                <option value="ALL">{t.all}</option>
                 {models.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
 
             <div className="input" style={{flex:1, minWidth: 220}}>
-              <label>ค้นหา</label>
-              <input placeholder="เช่น T009 หรือ darkgreen" value={query} onChange={(e)=>setQuery(e.target.value)} />
+              <label>{t.search}</label>
+              <input placeholder={t.searchPlaceholder} value={query} onChange={(e)=>setQuery(e.target.value)} />
             </div>
 
             <button className="btn" disabled={!canExport} onClick={onGenerate}>
-              {loading ? 'กำลังประมวลผล…' : 'Generate Excel'}
+              {loading ? '{t.processing}' : '{t.generate}'}
             </button>
           </div>
 
           <div className="footerHelp">
-            หมายเหตุ: โปรแกรมพยายามหา column จากชื่อหัวตารางก่อน ถ้าไม่เจอจะ fallback ไปที่คอลัมน์ B (SKU) และ I (สต็อกพร้อมขาย) ตามไฟล์ ERP ของคุณ
+            {t.note}
           </div>
 
           <div className="tableWrap">
             <table>
               <thead>
                 <tr>
-                  <th className="mono">รุ่น</th>
-                  <th className="mono">สี</th>
+                  <th className="mono">{t.model}</th>
+                  <th className="mono">{t.color}</th>
                   {SIZES.map(s => <th className="mono" key={s}>{s}</th>)}
                 </tr>
               </thead>
@@ -506,7 +636,7 @@ export default function App(){
                 {filteredMatrix.length === 0 && (
                   <tr>
                     <td colSpan={2+SIZES.length} style={{color:'rgba(255,255,255,0.65)'}}>
-                      {files.length===0 ? 'ยังไม่มีข้อมูล — อัปโหลดไฟล์ ERP ก่อน' : (loading ? 'กำลังอ่านไฟล์…' : 'ไม่พบข้อมูลตามตัวกรอง')}
+                      {files.length===0 ? t.emptyStateNoData : (loading ? t.emptyStateLoading : t.emptyStateNoMatch)}
                     </td>
                   </tr>
                 )}
@@ -517,12 +647,12 @@ export default function App(){
         </div>
 
         <div className="card">
-          <div className="cardTitle">2) ตรวจสอบก่อน Export</div>
+          <div className="cardTitle">{t.step2}</div>
           <div className="statRow">
             <div className="stat">
               <div className="left">
                 <div className={`dot ${files.length>0 ? 'good' : ''}`}></div>
-                <div className="statLabel">ไฟล์ที่อัปโหลด</div>
+                <div className="statLabel">{t.uploadedFiles}</div>
               </div>
               <div className="statValue">{files.length}</div>
             </div>
@@ -530,7 +660,7 @@ export default function App(){
             <div className="stat">
               <div className="left">
                 <div className={`dot ${rows.length>0 ? 'good' : (files.length>0 ? 'warn' : '')}`}></div>
-                <div className="statLabel">แถว SKU ที่อ่านได้</div>
+                <div className="statLabel">{t.readableRows}</div>
               </div>
               <div className="statValue">{stats.totalSkuRows}</div>
             </div>
@@ -538,7 +668,7 @@ export default function App(){
             <div className="stat">
               <div className="left">
                 <div className={`dot ${stats.uniqueRows>0 ? 'good' : ''}`}></div>
-                <div className="statLabel">จำนวนแถว (รุ่น+สี)</div>
+                <div className="statLabel">จำนวนแถว ({t.model}+{t.color})</div>
               </div>
               <div className="statValue">{stats.uniqueRows}</div>
             </div>
@@ -546,26 +676,82 @@ export default function App(){
             <div className="stat">
               <div className="left">
                 <div className={`dot ${stats.badSku===0 ? 'good' : 'warn'}`}></div>
-                <div className="statLabel">SKU ที่ parse ไม่ได้</div>
+                <div className="statLabel">{t.badSku}</div>
               </div>
               <div className="statValue">{stats.badSku}</div>
             </div>
 
             {errors.length > 0 && (
               <button className="btn secondary" onClick={onDownloadErrors} disabled={loading}>
-                ดาวน์โหลด Error Report (CSV)
+                {t.dlError}
               </button>
             )}
 
             <div className="kv">
-              <div className="pill"><strong>Sizes:</strong> {SIZES.join(', ')}</div>
-              <div className="pill"><strong>Missing:</strong> เติมเป็น 0</div>
-              <div className="pill"><strong>Aggregation:</strong> Sum (กันกรณีซ้ำจากหลายไฟล์)</div>
+              <div className="pill"><strong>{t.sizes}:</strong> {SIZES.join(', ')}</div>
+              <div className="pill"><strong>{t.missing}:</strong> {t.missingZero}</div>
+              <div className="pill"><strong>{t.aggregation}:</strong> {t.aggSum}</div>
             </div>
+
+<div style={{marginTop: 12}}>
+  <div className="cardTitle" style={{marginBottom: 10}}>{t.checksTitle}</div>
+  <div className="statRow">
+    <div className="stat">
+      <div className="left">
+        <div className={`dot ${checks.ok ? 'good' : (rows.length>0 ? 'warn' : '')}`}></div>
+        <div className="statLabel">{t.checkRaw}</div>
+      </div>
+      <div className="statValue">{checks.rawTotal}</div>
+    </div>
+
+    <div className="stat">
+      <div className="left">
+        <div className={`dot ${checks.ok ? 'good' : (rows.length>0 ? 'warn' : '')}`}></div>
+        <div className="statLabel">{t.checkMatrix}</div>
+      </div>
+      <div className="statValue">{checks.matrixTotal}</div>
+    </div>
+
+    <div className="stat">
+      <div className="left">
+        <div className={`dot ${checks.ok ? 'good' : (rows.length>0 ? 'warn' : '')}`}></div>
+        <div className="statLabel">{t.checkDiff}</div>
+      </div>
+      <div className="statValue">{checks.diff}</div>
+    </div>
+
+    {rows.length > 0 && (
+      <div className="footerHelp" style={{marginTop: 6}}>
+        {checks.ok ? <span style={{color:'rgba(34,197,94,0.95)'}}>{t.checkOk}</span> : <span style={{color:'rgba(245,158,11,0.95)'}}>{t.checkWarn}</span>}
+      </div>
+    )}
+
+    {checks.perFile.length > 0 && (
+      <div className="tableWrap" style={{marginTop: 10}}>
+        <table>
+          <thead>
+            <tr>
+              <th className="mono">{t.perFile}</th>
+              <th className="mono">{t.checkRaw}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {checks.perFile.map(([name, sum]) => (
+              <tr key={name}>
+                <td className="mono">{name}</td>
+                <td className="mono">{sum}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</div>
           </div>
 
           <div className="footerHelp">
-            ถ้ามี SKU ที่ผิดรูปแบบ (เช่น ไม่มี - หรือไม่มีไซส์ท้ายสุด) ให้เปิดไฟล์ CSV error เพื่อตรวจสอบ แล้ว export ใหม่อีกครั้ง
+            {t.foot}
           </div>
         </div>
       </div>
